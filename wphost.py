@@ -9,18 +9,24 @@ parser.add_argument('current_host_name')
 parser.add_argument('new_host_name')
 parser.add_argument('input_file', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
 parser.add_argument('output_file', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
-parser.add_argument("-v", "--verbose", action="store_true", help="show the number of replacements made")
+parser.add_argument('-v', '--verbose', action='store_true', help='show the number of replacements made')
+parser.add_argument('-m', '--mode', choices=['link', 'email', 'both'], default='link')
+
 args = parser.parse_args()
 
 f_in = args.input_file
 f_out = args.output_file
 from_host = args.current_host_name
 to_host = args.new_host_name
+mode = args.mode
 
 host_escaped = re.escape(from_host);
 
-host_re = re.compile('(https?://|@)('+host_escaped+')')
-serialized_re = re.compile('s:([0-9]+):"([^"]*(?:https?://|@))('+host_escaped+')([^"]*)"')
+prefixes = {'link': 'https?://', 'email':'@', 'both': 'https?://|@'}
+prefix = prefixes[mode]
+
+host_re = re.compile('('+prefix+')('+host_escaped+')')
+serialized_re = re.compile('s:([0-9]+):"([^"]*(?:'+prefix+'))('+host_escaped+')([^"]*)"')
 
 diff_len = len(to_host) - len(from_host)
 
@@ -55,5 +61,4 @@ except OSError as e:
 if (args.verbose):
     info = "Replacements: {total} ({n} normal, {s} serialized)"
     print(info.format(total=total_subs, n=normal_subs, s=serialized_subs))
-
 
