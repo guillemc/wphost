@@ -14,7 +14,7 @@ class LineProcessor:
         host_escaped = re.escape(from_host)
         prefix = __class__.prefixes[mode]
         self.__host_re = re.compile('('+prefix+')('+host_escaped+')')
-        self.__serialized_re = re.compile('s:([0-9]+):"([^"]*(?:'+prefix+'))('+host_escaped+')([^"]*)"')
+        self.__serialized_re = re.compile('s:([0-9]+):(\\\\?")([^"\\\\]*(?:'+prefix+'))('+host_escaped+')([^"\\\\]*)(\\\\?")')
         self.__diff_len = len(to_host) - len(from_host)
 
     def __replace_host(self, match):
@@ -22,11 +22,13 @@ class LineProcessor:
 
     def __replace_serialized_host(self, match):
         new_len = int(match.group(1)) + self.__diff_len
-        result = 's:{length}:"{prefix}{host}{suffix}"'
+        result = 's:{length}:{q1}{prefix}{host}{suffix}{q2}'
         return result.format(length=new_len,
                              host=self.__to_host,
-                             prefix=match.group(2),
-                             suffix = match.group(4))
+                             q1 = match.group(2),
+                             prefix=match.group(3),
+                             suffix = match.group(5),
+                             q2 = match.group(6))
 
     def process(self, line):
         line, serialized_subs = self.__serialized_re.subn(self.__replace_serialized_host, line)

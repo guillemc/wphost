@@ -66,6 +66,18 @@ class TestWpHost(unittest.TestCase):
         self.assertEqual(lp.process(str1), (str2, 0, 2))
 
 
+    def testSerializedQuotedText(self):
+        lp = LineProcessor('www.development.net', 'www.production.com', 'link')
+
+        str1 =  r'a:6:{s:4:\"file\";s:43:\"Depositphotos_15690599_original-940x198.jpg\";s:5:\"width\";i:940;s:6:\"height\";i:198;s:9:\"mime-type\";s:10:\"image/jpeg\";s:4:\"path\";s:51:\"2014/02/Depositphotos_15690599_original-940x198.jpg\";s:3:\"url\";s:97:\"http://www.development.net/wp-content/uploads/2014/02/Depositphotos_15690599_original-940x198.jpg\";}' \
+                r'a:6:{s:4:\"file\";s:23:\"mg_3358-1-6-312x416.jpg\";s:5:\"width\";i:312;s:6:\"height\";i:416;s:9:\"mime-type\";s:10:\"image/jpeg\";s:4:\"path\";s:31:\"2013/06/mg_3358-1-6-312x416.jpg\";s:3:\"url\";s:77:\"http://www.development.net/wp-content/uploads/2013/06/mg_3358-1-6-312x416.jpg\";}'
+
+        str2 =  r'a:6:{s:4:\"file\";s:43:\"Depositphotos_15690599_original-940x198.jpg\";s:5:\"width\";i:940;s:6:\"height\";i:198;s:9:\"mime-type\";s:10:\"image/jpeg\";s:4:\"path\";s:51:\"2014/02/Depositphotos_15690599_original-940x198.jpg\";s:3:\"url\";s:96:\"http://www.production.com/wp-content/uploads/2014/02/Depositphotos_15690599_original-940x198.jpg\";}' \
+                r'a:6:{s:4:\"file\";s:23:\"mg_3358-1-6-312x416.jpg\";s:5:\"width\";i:312;s:6:\"height\";i:416;s:9:\"mime-type\";s:10:\"image/jpeg\";s:4:\"path\";s:31:\"2013/06/mg_3358-1-6-312x416.jpg\";s:3:\"url\";s:76:\"http://www.production.com/wp-content/uploads/2013/06/mg_3358-1-6-312x416.jpg\";}'
+
+        self.assertEqual(lp.process(str1), (str2, 0, 2))
+
+
 
     def testMixed(self):
         lp = LineProcessor('development.net', 'production.com', 'both')
