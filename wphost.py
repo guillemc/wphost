@@ -31,7 +31,13 @@ class LineProcessor:
                              q2 = match.group(6))
 
     def process(self, line):
-        line, serialized_subs = self.__serialized_re.subn(self.__replace_serialized_host, line)
+        if not line.strip():
+            return line, 0, 0
+        line, num_subs = self.__serialized_re.subn(self.__replace_serialized_host, line)
+        serialized_subs = num_subs
+        while num_subs:
+            line, num_subs = self.__serialized_re.subn(self.__replace_serialized_host, line)
+            serialized_subs += num_subs
         line, normal_subs = self.__host_re.subn(self.__replace_host, line)
         return line, normal_subs, serialized_subs
 
