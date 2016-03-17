@@ -8,38 +8,49 @@ class LineProcessor:
     prefixes = {'link': 'https?://', 'email': '@', 'both': 'https?://|@'}
 
     def __init__(self, from_host, to_host, mode='link'):
-        self.__from_host = from_host
-        self.__to_host = to_host
+        self._from_host = from_host
+        self._to_host = to_host
 
         host_escaped = re.escape(from_host)
         prefix = __class__.prefixes[mode]
-        self.__host_re = re.compile('('+prefix+')('+host_escaped+')')
-        self.__serialized_re = re.compile('s:([0-9]+):(\\\\?")([^"]*(?:'+prefix+'))('+host_escaped+')([^"]*?)(\\\\?")')
-        self.__diff_len = len(to_host) - len(from_host)
+        self._host_re = re.compile('('+prefix+')('+host_escaped+')')
+        self._serialized_string_re = re.compile(r's:[0-9]+:\\?".*?\\?";')
+        self._serialized_host_re = re.compile('s:([0-9]+):(\\\\?")(.*?(?:'+prefix+'))'+host_escaped+'(.*?)(\\\\?";)')
+        self._diff_len = len(to_host) - len(from_host)
+        self._serialized_subs = 0
 
-    def __replace_host(self, match):
-        return '{suffix}{host}'.format(suffix=match.group(1), host=self.__to_host)
+    def _replace_host(self, match):
+        return '{suffix}{host}'.format(suffix=match.group(1), host=self._to_host)
 
-    def __replace_serialized_host(self, match):
-        new_len = int(match.group(1)) + self.__diff_len
+    def _check_serialized_host(self, match):
+        serialized_string = match.group(0)
+        serialized_string, num_subs = self._serialized_host_re.subn(self._replace_serialized_host, serialized_string)
+        serialized_subs = num_subs
+        while num_subs:
+            serialized_string, num_subs = self._serialized_host_re.subn(self._replace_serialized_host, serialized_string)
+            serialized_subs += num_subs
+
+        self._serialized_subs += serialized_subs
+        return serialized_string
+
+    def _replace_serialized_host(self, match):
+        orig_len = int(match.group(1))
+        new_len = orig_len + self._diff_len
+        q1 = match.group(2)
+        prefix = match.group(3)
+        suffix = match.group(4)
+        q2 = match.group(5)
         result = 's:{length}:{q1}{prefix}{host}{suffix}{q2}'
-        return result.format(length=new_len,
-                             host=self.__to_host,
-                             q1=match.group(2),
-                             prefix=match.group(3),
-                             suffix=match.group(5),
-                             q2=match.group(6))
+        return result.format(length=new_len, host=self._to_host, q1=q1, prefix=prefix, suffix=suffix, q2=q2)
 
     def process(self, line):
         if not line.strip():
             return line, 0, 0
-        line, num_subs = self.__serialized_re.subn(self.__replace_serialized_host, line)
-        serialized_subs = num_subs
-        while num_subs:
-            line, num_subs = self.__serialized_re.subn(self.__replace_serialized_host, line)
-            serialized_subs += num_subs
-        line, normal_subs = self.__host_re.subn(self.__replace_host, line)
-        return line, normal_subs, serialized_subs
+
+        line = self._serialized_string_re.sub(self._check_serialized_host, line)
+        line, normal_subs = self._host_re.subn(self._replace_host, line)
+
+        return line, normal_subs, self._serialized_subs
 
 
 if __name__ == '__main__':
