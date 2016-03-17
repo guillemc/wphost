@@ -5,7 +5,7 @@ import re
 
 class LineProcessor:
 
-    prefixes = {'link': 'https?://', 'email':'@', 'both': 'https?://|@'}
+    prefixes = {'link': 'https?://', 'email': '@', 'both': 'https?://|@'}
 
     def __init__(self, from_host, to_host, mode='link'):
         self.__from_host = from_host
@@ -25,10 +25,10 @@ class LineProcessor:
         result = 's:{length}:{q1}{prefix}{host}{suffix}{q2}'
         return result.format(length=new_len,
                              host=self.__to_host,
-                             q1 = match.group(2),
+                             q1=match.group(2),
                              prefix=match.group(3),
-                             suffix = match.group(5),
-                             q2 = match.group(6))
+                             suffix=match.group(5),
+                             q2=match.group(6))
 
     def process(self, line):
         if not line.strip():
@@ -40,7 +40,6 @@ class LineProcessor:
             serialized_subs += num_subs
         line, normal_subs = self.__host_re.subn(self.__replace_host, line)
         return line, normal_subs, serialized_subs
-
 
 
 if __name__ == '__main__':
@@ -79,7 +78,7 @@ if __name__ == '__main__':
     except OSError as e:
         sys.stderr.write("Error({0}): {1}\n".format(e.errno, e.strerror))
 
-    if (args.verbose):
+    if args.verbose:
         info = "Replacements: {total} ({n} normal, {s} serialized)"
         total_subs = normal_subs + serialized_subs
         print(info.format(total=total_subs, n=normal_subs, s=serialized_subs))
